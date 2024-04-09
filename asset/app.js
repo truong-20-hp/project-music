@@ -16,6 +16,8 @@
 const $ = document.querySelector.bind(document)
 const $$ = document.querySelectorAll.bind(document)
 
+const PLAYER_STORAGE_KEY = 'F8_PLAYER' 
+
 const heading = $('header h3')
 const headingSinger = $('header h6')
 const cdThumd = $('.cd-thumb')
@@ -28,12 +30,18 @@ const nextBtn = $('.btn-next')
 const prevBtn = $('.btn-prev')
 const randomBtn = $('.btn-random')
 const repeatBtn = $('.btn-repeat')
+const playlist = $('.playlist')
+
 
 const app = {
     currentIndex : 0,
     isPlaying : false,
     isRandom : false,
     isRepeat : false,
+    // local storage lưu dưex liệu cục bộ trên máy tính của người dùng
+    // dữ liệu trả về là dạng chuỗi JSON 
+    config : JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || {},
+    
     songs : [
         {
             name: 'Thương em là điều anh không thể ngờ',
@@ -96,11 +104,14 @@ const app = {
             image : './asset/image/10calon.webp'
         },
     ],
-
+    setConfig: function(key, value) {
+        this.config[key] = value;
+        localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(this.config))
+    },
     render: function() {
         const htmls = this.songs.map((song, index) => {
             return `
-                <div class="song ${index === this.currentIndex ? 'active' : ''}">
+                <div class="song ${index === this.currentIndex ? 'active' : ''}" data-index = ${index}>
                     <div class="thumb" style="background-image: url('${song.image}')">
                     </div>
                     <div class="body">
@@ -113,7 +124,7 @@ const app = {
                 </div>
             `
         })
-        $('.playlist').innerHTML = htmls.join('')
+        playlist.innerHTML = htmls.join('')
     },
 
 
@@ -217,6 +228,8 @@ const app = {
         // bật / tắt random :
         randomBtn.onclick = function() {
             _this.isRandom = !_this.isRandom
+            // lưu vào local application để nhớ trạng thái bật tắt trước khi thoát ứng dụng
+            _this.setConfig('isRandom', _this.isRandom)
             randomBtn.classList.toggle('active' , _this.isRandom)
         }
         // cú pháp classList.toggle(className, force) 
@@ -228,6 +241,8 @@ const app = {
         // xử lí khi lặp lại một song : 
         repeatBtn.onclick = function() {
             _this.isRepeat = !_this.isRepeat
+            // lưu vào local application để nhớ trạng thái bật tắt trước khi thoát ứng dụng
+            _this.setConfig('isRepeat', _this.isRepeat)
             repeatBtn.classList.toggle('active' , _this.isRepeat)
         }
 
@@ -238,6 +253,23 @@ const app = {
                 audio.play()
             }else{
                 nextBtn.click()    
+            }
+        }
+
+        // lắng nghe hành vi click vào playlist:
+        playlist.onclick = function(e) {
+            const songNode = e.target.closest('.song:not(.active)')
+            if(songNode || e.target.closest('.option')) {
+                // xử lí khi click vào song : 
+                if(songNode) {  
+                    _this.currentIndex = Number(songNode.dataset.index)
+                    _this.loadCurrentSong()
+                    _this.render()
+                    audio.play()
+                }
+                // xử lí khi ấn vào option :
+                if(e.target.closest('.option')) {
+                }
             }
         }
 
@@ -262,6 +294,10 @@ const app = {
         audio.src = this.currentSong.path
     },
 
+    loadConfig: function() {
+        this.isRandom = this.config.isRandom
+        this.isRepeat = this.config.isRepeat
+    },
     nextSong : function() {
 
         this.currentIndex++
@@ -295,6 +331,9 @@ const app = {
 
     start: function() {
 
+        // gán cấu cònfig vào ứng dụng
+        this.loadConfig()
+
         // định nghĩa các thuộc tính cho object
         this.defineProperties()
 
@@ -306,6 +345,10 @@ const app = {
 
         // render playlist
         this.render()
+
+        repeatBtn.classList.toggle('active' , this.isRepeat)
+        randomBtn.classList.toggle('active' , this.isRandom)
+
     }
 }
 app.start()

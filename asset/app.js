@@ -103,6 +103,12 @@ const app = {
             path : './asset/song/song10.mp3',
             image : './asset/image/10calon.webp'
         },
+        {
+            name: 'Chỉ còn lại tình yêu',
+            singer : 'Dương',
+            path : './asset/song/song11.mp3',
+            image : './asset/image/11duong.png'
+        },
     ],
     setConfig: function(key, value) {
         this.config[key] = value;
